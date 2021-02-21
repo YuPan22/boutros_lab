@@ -1,0 +1,430 @@
+**WORKING WITH LARGE DATASETS: BoutrosLab.plotting.general**\
+
+**- Take a look at 'Q4_SampleOutput.tiff'**\
+**- Re-create this figure using BoutrosLab.plotting.general functions. **\
+**- The data file you will use is named 'Q4_het.study_data.txt'**\
+
+**Understanding the figure: (more information on the project can be found by reading the paper https://www.nature.com/articles/ng.3315 )**\
+**- The fraction plot at the top of the figure indicates the proportion of mutations per bin. (Note: your results will not look identical to the plot provided).**\
+**- The literature covariate bars labelled 'Baca','Berger',and 'Weischenfeldt' are studies. The colours indicate whether or not a mutation in that window of the genome was seen in that study.**\
+**- The large plot of small coloured bars indicates locations in chromosomes (x-axis) in different samples (y-axis) of mutations. CTX = chromosomal translocation,ITX = intrachrosomosomal translocation,INV = inversion.**\
+**- The right-side covariates identify clinical qualities of the samples. The first covariate indicates which patient the samples come from. The second covariate indicates whether the sample was collected by surgery or biopsy. The third covariate indicates the Gleason score of the sample. The fourth covariate indicates how the tissue samples were preserved. **\
+
+**Understanding the data:**\
+**- The patient IDs are identified in the column headers.**\
+**- The cohorts are such that samples 'CPCG0001','CPCG0003','CPCG0006','CPCG0020',and 'CPCG0042' are Bx (biopsy),and all others are Sx (surgery)**\
+**- For tissue type,all 'F0' samples are Frozen,while all other samples are FPPE**\
+**- The Gleason score can be matched to the sample as shown in the sample output plot**\
+**- The literature covariate data (Baca,Berger,and Weischenfeldt) are listed in the last three columns of the data file.**\
+**- The fraction plot at the top is found by the proportion of mutations per patient**\
+**- The notation for None,CTX,ITX and INV is determined by the numeric coding of 0,1,2,3.**\
+
+**Colour schemes used:**\
+**-main plot: c('white','cornflowerblue','darkolivegreen4','darkred')**\
+**-Cohort: c('royalblue','pink')**\
+**-Gleason score: c('3+4' = 'yellow','4+3' = 'orange','4+4' = 'red')**\
+**-Tissue type: c('Frozen' = colours()[532],'FFPE' = colours()[557])**\
+**-Patient ID: c(**\
+		**'CPCG0001' = 'blue',**\
+		**'CPCG0003' = 'purple',**\
+		**'CPCG0006' = 'green',**\
+		**'CPCG0020' = 'orange',**\
+		**'CPCG0042' = 'yellow',**\
+		**'CPCG0099' = 'black',**\
+		**'CPCG0102' = 'wheat4',**\
+		**'CPCG0103' = 'green4',**\
+		**'CPCG0183' = 'grey',**\
+		**'CPCG0184' = 'red4')**\
+**-Literature: you may choose your own appropriate colour scheme**\
+
+**Sample Order for plotting:**\
+**sample.order <- c(**\
+        **'CPCG0001F0',**\
+        **'CPCG0003F0',**\
+        **'CPCG0006F0',**\
+        **'CPCG0020F0',**\
+        **'CPCG0042F0',**\
+        **'CPCG0099F0',**\
+        **'CPCG0099P1',**\
+        **'CPCG0102F0',**\
+        **'CPCG0102P1',**\
+        **'CPCG0102P2',**\
+        **'CPCG0103P7',**\
+        **'CPCG0103F0',**\
+        **'CPCG0103P2',**\
+        **'CPCG0103P1',**\
+        **'CPCG0103P4',**\
+        **'CPCG0103P3',**\
+        **'CPCG0103P8',**\
+        **'CPCG0103P5',**\
+        **'CPCG0103P6',**\
+        **'CPCG0183F0',**\
+        **'CPCG0183P2',**\
+        **'CPCG0183P1',**\
+        **'CPCG0183P3',**\
+        **'CPCG0184P3',**\
+        **'CPCG0184P1',**\
+        **'CPCG0184F0',**\
+        **'CPCG0184P2',**\
+        **'CPCG0184P4'**\
+        **);**\
+
+```{r}
+library('BoutrosLab.plotting.general');
+
+het.study.file <- '/Users/yupan/Downloads/new-members-documentation-training-and-guides/r-training/2. boutrosLab-plotting-general/Q4/Q4_HetStudy_data.txt';
+
+het.study <- read.table(
+    het.study.file,
+    header = TRUE,
+    sep = '\t'
+    );
+
+# Get the three literatures
+lit.data <- het.study[,c('Baca','Berger','Weischenfeldt')];
+
+# Set the sample.order
+sample.order <- c(
+    'CPCG0001F0',
+    'CPCG0003F0',
+    'CPCG0006F0',
+    'CPCG0020F0',
+    'CPCG0042F0',
+    'CPCG0099F0',
+    'CPCG0099P1',
+    'CPCG0102F0',
+    'CPCG0102P1',
+    'CPCG0102P2',
+    'CPCG0103P7',
+    'CPCG0103F0',
+    'CPCG0103P2',
+    'CPCG0103P1',
+    'CPCG0103P4',
+    'CPCG0103P3',
+    'CPCG0103P8',
+    'CPCG0103P5',
+    'CPCG0103P6',
+    'CPCG0183F0',
+    'CPCG0183P2',
+    'CPCG0183P1',
+    'CPCG0183P3',
+    'CPCG0184P3',
+    'CPCG0184P1',
+    'CPCG0184F0',
+    'CPCG0184P2',
+    'CPCG0184P4'
+    );
+
+# Sort the literatures
+het.study <- het.study[,sample.order];
+
+# Get the proportion of patients with a mutation for each chromosomal region
+fraction.mutations <- data.frame(
+    Fraction = apply(
+        X = het.study,
+        MARGIN = 1,
+        FUN = function(region) {
+          length(which(region > 0)) / ncol(het.study);
+          }
+        )
+    );
+
+# Sample labels for plotting
+sample.labels <- substr(names(het.study),9,10);
+
+# Patient covariate vector
+patients <- substr(names(het.study),0,8);
+
+# Tissue type labels for plotting
+tissue.type.labels <- ifelse(grepl('^F',sample.labels),'Frozen','FFPE');
+
+# Sample cohort labels
+cohort.labels <- ifelse(
+    names(het.study) %in% c('CPCG0001','CPCG0003','CPCG0006','CPCG0020','CPCG0042'),
+    'Sx',
+    'Bx'
+    );
+
+# Write the gleason Scores from the plot
+gleason <- data.frame(
+    score = c('3+4','3+4','4+3','3+4','4+3','3+4','4+3','4+3','4+4','4+4','3+4','3+4','3+4','3+4','3+4','4+3','3+4','4+3','4+3','4+3','3+4','3+4','3+4','4+4','4+3','4+3','4+3','3+4'),
+    plus = c(TRUE,rep(FALSE,14),rep(TRUE,4),rep(FALSE,9))
+    );
+
+# Find the boundaries of each chromosome across rows for later plotting
+chr <- sub(':.+','',row.names(het.study));
+chr.boundaries <- unlist(lapply(unique(chr),function(this.chr) min(which(chr == this.chr))));
+
+# Add the final boundary for Chr Y
+chr.boundaries <- c(chr.boundaries,nrow(het.study));
+
+# Patient boundaries for row lines in plot
+patient.boundaries <- unlist(
+    lapply(
+        unique(patients),
+        function(pat) min(which(patients == pat))
+        )
+    );
+
+# Find the mid point of each range = the place where chromsome label should go on the plot
+chr.label.pos <- unlist(
+    lapply(
+        1:length(chr.boundaries),
+        function(this.chr) median(chr.boundaries[c(this.chr,this.chr + 1)])
+        )
+    );
+
+# Now start making the main heatmap
+
+# Main colour scheme
+mutation.colour <- c('white','cornflowerblue','darkolivegreen4','darkred');
+names(mutation.colour) <- c('0','1','2','3');
+mutation.colour.matrix <- apply(
+    X = het.study,
+    MARGIN = 2,
+    FUN = function(col) {
+      mutation.colour[as.character(col)];
+      }
+    );
+
+# Colourscheme for covariates
+
+# Colours for patient
+patient.colour <- c(
+    'CPCG0001' = 'blue',
+    'CPCG0003' = 'purple',
+    'CPCG0006' = 'green',
+    'CPCG0020' = 'orange',
+    'CPCG0042' = 'yellow',
+    'CPCG0099' = 'black',
+    'CPCG0102' = 'wheat4',
+    'CPCG0103' = 'green4',
+    'CPCG0183' = 'grey',
+    'CPCG0184' = 'red4'
+    );
+
+# Cohort colours - surgery or biopsy
+cohort.colour <- c(
+    'Bx' = 'royalblue',
+    'Sx' = 'pink'
+    );
+
+# Gleasen score colours
+gleason.colours <- c(
+    '3+4' = 'yellow',
+    '4+3' = 'orange',
+    '4+4' = 'red'
+    );
+
+# Tissue type colours
+tissue.colours <- c('Frozen' = colours()[532],'FFPE' = colours()[557]);
+
+# Create heatmap
+main.heatmap <- create.heatmap(
+    mutation.colour.matrix,
+    cluster.dimensions = 'none',
+    input.colours = TRUE,
+    yaxis.lab = sample.labels,
+    yaxis.cex = 0.6,
+    yaxis.fontface = 'plain',
+    yaxis.tck = c(0.5,0),
+    xaxis.lab = unique(sub('chr','',chr)),
+    xaxis.cex = 0.6,
+    xaxis.fontface = 'plain',
+    xat = chr.label.pos,
+    xaxis.rot = 0,
+    col.lines = chr.boundaries + .5,
+    row.lines = patient.boundaries + .5,
+    grid.col = TRUE,
+    grid.row = TRUE,
+    force.grid.col = TRUE,
+    print.colour.key = FALSE
+    );
+
+# Create colour key for the main heatmap as a seperate heatmap
+main.colourkey <- create.heatmap(
+    t(data.frame(mutation.colour)),
+    input.colours = TRUE,
+    cluster.dimensions = 'none',
+    xaxis.lab = c('None','CTX','ITX','INV'),
+    xaxis.rot = 0,
+    xaxis.cex = 0.6,
+    xaxis.fontface = 'plain',
+    print.colour.key = FALSE,
+    yaxis.tck = FALSE,
+    xaxis.tck = FALSE
+    );
+
+### Function to produce covariate plotting column and legend ###
+# colour = key mapping covariates to colour
+# covariate = vector of covariates
+# title = title for legend
+get.covariate.col.and.legend <- function(colour,covariate,title) {
+    # Create vector of colours
+    covariate.col <- colour[covariate];
+
+    # Create legend for covariate colours
+    covariate.legend <- list(
+        legend = list(
+            colours = colour,
+            labels = names(colour),
+            title = bquote(~underline(.(title)))
+            )
+        );
+    return(list(col = covariate.col,legend = covariate.legend));
+    }
+
+# Generate covariate plotting objects and legends to use with the get.covariate.col.and.legend
+covariates <- list(
+    list(colour = patient.colour,covariate = patients,title = 'Patient ID'),
+    list(colour = cohort.colour,covariate = cohort.labels,title = 'Cohort'),
+    list(colour = gleason.colours,covarite = gleason$score,title = 'Gleason score'),
+    list(colour = tissue.colours,covariate = tissue.type.labels,title = 'Tissue type')
+    );
+
+# Now create the seperate covariate heatmap plot
+# This could be done by adding row annotation to the main heatmap,but this would not allow text to be added
+# To add text to covariate data (for the gleason score) it needs to be a seperate heatmap
+covariate.objects <- lapply(
+    covariates,
+    function(cov) get.covariate.col.and.legend(cov[[1]],cov[[2]],cov[[3]])
+    );
+
+# Colour matrix for plotting
+covariate.colour.matrix <- do.call(
+    'cbind',
+    lapply(
+        covariate.objects,
+        function(cov) cov$col
+        )
+    );
+
+covariate.heatmap <- create.heatmap(
+    t(covariate.colour.matrix),
+    cluster.dimensions = 'none',
+    input.colours = TRUE,
+    print.colour.key = FALSE,
+    grid.row  = TRUE,
+    grid.col = TRUE,
+    yaxis.tck = FALSE,
+    xaxis.tck = FALSE,
+    xaxis.lab = rep('',5),
+    yaxis.lab = rep('',nrow(covariate.colour.matrix)),
+    yat = NULL,
+    cell.text = rep('+',length(which(gleason$plus))),
+    row.pos = which(gleason$plus),
+    col.pos = 3
+    );
+
+# Produce the literature heatmap & legend - this is columnwise data
+lit.colours <- default.colours(3);
+literature.colour.matrix <- cbind(
+    ifelse(lit.data$Baca > 0,lit.colours[1],'white'),
+    ifelse(lit.data$Weischenfeldt > 0,lit.colours[2],'white'),
+    ifelse(lit.data$Berger > 0,lit.colours[3],'white')
+    );
+
+literature.heatmap <- create.heatmap(
+    literature.colour.matrix,
+    cluster.dimensions = 'none',
+    input.colours = TRUE,
+    print.colour.key = FALSE,
+    yaxis.tck = FALSE,
+    yat = FALSE,
+    xat = FALSE,
+    xaxis.lab = rep('',nrow(literature.colour.matrix)),
+    yaxis.lab = NULL,
+    col.lines = chr.boundaries + .5,
+    grid.col = TRUE,
+    force.grid.col = TRUE
+    );
+
+# Legend for literature colours
+literature.legend <- list(
+    legend = list(
+        colours = lit.colours,
+        labels = names(lit.data),
+        title = bquote(~underline('Publication'))
+        )
+    );
+
+# Now make the bar plot showing the fraction of patients with a mutation in each chromosomal region
+freq.barplot <- create.barplot(
+    Fraction ~ 1:nrow(fraction.mutations),
+    col = 'black',
+    data = fraction.mutations,
+    border.lwd = 1,
+    xaxis.tck = 0,
+    xlab.label = '',
+    xaxis.lab = rep('',nrow(fraction.mutations)),
+    ylab.axis.padding = 4,
+    ylab.label = 'Fraction',
+    ylab.cex = 1,
+    yaxis.lab = c(0,0.5,1),
+    yat = c(0,0.5,1),
+    yaxis.fontface = 'plain',
+    yaxis.cex = 0.8,
+    yaxis.tck = c(0.5,0),
+    ylim = c(0,1)
+    );
+
+# Prepare legend grouping for final plot
+legends <- legend.grob(
+    c(
+        unlist(
+            lapply(
+                covariate.objects,
+                function(cov) cov$legend
+                ),
+            recursive = FALSE
+            ),
+        literature.legend
+        ),
+    title.just = 'left'
+    );
+
+# Create the final plot - struggling to get seperate ylimits when 'plot.labels.to.retrieve' not used
+# However,when plot.labels.to.retrieve is set,cannot seem to remove yaxis.labels from the plots in the first column
+# Succescully made the plot using create.multipanelplot later in the script however
+create.multiplot(
+    plot.objects = list(main.colourkey,main.heatmap,covariate.heatmap,literature.heatmap,freq.barplot),
+    plot.layout = c(2,4),
+    layout.skip = c(FALSE,TRUE,FALSE,FALSE,FALSE,TRUE,FALSE,TRUE),
+    ylab.padding = 7,
+    ylab.cex = 1.5,
+    main.key.padding = 0,
+    main.cex = 1.25,
+    yaxis.cex = 1,
+    panel.heights = c(0.3,0.1,0.8,0.1),
+    panel.widths = c(0.95,0.05),
+    # Set spacing between the plots
+    y.spacing = c(0.5,0.5,0.5,0.5),
+    # Remove axes tick marks
+    xaxis.alternating = 0,
+    yaxis.lab = list(NULL,sample.labels,NULL,NULL,NULL),
+    plot.labels.to.retrieve = c(1,2,3,4,5),
+    legend = list(left = list(fun = legends)),
+    print.new.legend = TRUE,
+    height = 6,
+    width = 10
+    );
+
+# Make the final plot as a multi panel plot
+create.multipanelplot(
+    plot.objects = list(freq.barplot,literature.heatmap,main.heatmap,covariate.heatmap,main.colourkey),
+    layout.height = 4,
+    layout.width = 2,
+    plot.objects.heights = c(.4,.25 ,1.2,.2),
+    plot.objects.widths = c(1.2,0.1),
+    layout.skip = c(FALSE,TRUE,FALSE,TRUE,FALSE,FALSE,FALSE,TRUE),
+    legend = list(left = list(fun = legends)),
+    width = 13,
+    height = 7,
+    left.legend.padding = 0,
+    top.padding = -2,
+    bottom.padding = -2,
+    right.padding = 0,
+    left.padding = 0,
+    y.spacing = - 0.6
+    );
+```

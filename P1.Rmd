@@ -1,0 +1,31 @@
+# Q1
+**Familiarize yourself with the functions available in BoutrosLab.plotting.general**
+
+**- These are easily viewable at http://bpg.oicr.on.ca/API/BoutrosLab.plotting.general/5.3.4/index.html**
+
+**- Note the scope and customizability of the different functions**
+
+**- Think about what data-types would be most appropriate for the different plot-types**
+
+http://bpg.oicr.on.ca/API/BoutrosLab.plotting.general/5.3.4/index.html
+
+* create.barplot: Make a barplot
+* create.boxplot: Make a boxplot
+* create.colorkey: Create Colourkey
+* create.colourkey: Create Colourkey
+* create.dendrogram: Generate a dendrogram
+* create.densityplot: Make a density plot
+* create.dotmap: Make a dotmap with coloured background
+* create.heatmap: Make a heatmap
+* create.hexbinplot: Make a hexagonally binned plot
+* create.histogram: Make a histogram
+* create.manhattanplot: Make a Manhattan plot
+* create.multiplot: Joins plots together
+* create.polygonplot: Make a polygonplot
+* create.qqplot.comparison: Make a quantile-quantile plot of two samples
+* create.qqplot.fit: Make a quantile-quantile plot of a sample
+* create.qqplot.fit.confidence.interval: Create the confidence bands for a one-sample qq plot
+* create.scatterplot: Make a scatterplot
+* create.segplot: Make a segplot
+* create.stripplot: Make a strip-plot
+* create.violinplot: Make a violin plot

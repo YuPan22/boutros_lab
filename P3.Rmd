@@ -1,0 +1,387 @@
+# COMPLEX PLOTS: BoutrosLab.plotting.general
+# Take a look at 'Q3_SampleOutput.tiff'
+
+**This is the figure you will be re-creating using BoutrosLab.plotting.general functions.**\
+**The data used to generate the figure is found in the 'Q3_SeqControl_data.tsv' file**\
+
+**======= BACKGROUND INFO =======**\
+**The first thing you need to do is understand the figure. This is a figure used to describe the performance of SeqControl.**\
+
+**SeqControl is a framework used to make predictions in sequencing data quality. For example,a researcher may want to conduct an experiment which requires sequencing data. The researcher may begin by generating a subset of the data,and measuring metrics of the data. These metrics can be combined into a statistical model to predict features of the experiment,in order to improve the choices made when sequencing the rest of the data required.**\
+
+**An overview figure 'SeqControl_Overview.tff' can be found in the outputs folder.**\
+
+**The statistical model referred to in this figure is called a random forest. Essentially,this model makes a prediction regarding the quality of sequencing data that will be generated. The fraction of 'yes' vote indicates the confidence that six lanes of sequencing will achieve 50x coverage.**\
+
+**The actual observed coverage of the data is shown by the colour of the bar,with black indicating high coverage,and grey indicating lower than 50x coverage.**\
+
+**There are also five covariate bars beneath the barplot.**\
+
+**The first covariate bar indicates the tumour sample from which the sequencing data came from. The second covariate bar indicates how the tumour sample was prepared - either FFPE or frozen. The remaining three covariates indicate some metric related to the data:**\
+**-% Bases > 0**\
+**-Unique start points**\
+**-Average reads/start**\
+
+**======= UNDERSTANDING THE DATA =======**\
+**The data for this plot has been organized into a tab-delimited file. The header of the file indicates what kind of data is stored in each column.**\
+
+**======= PLOTTING =======**\
+**Overview: The main plot in this figure is made using create.barplot. The covariates are made using create.heatmap. The legend is created using legend.grob. All of these elements are combined together using create.multipanelplot.**\
+
+```{r}
+# Install BoutrosLab.plotting.general from CRAN.
+# install.packages('BoutrosLab.plotting.general')
+# Make sure that packages were installed properly
+library('BoutrosLab.plotting.general');
+```
+
+## Step 1. You will need to read in the data and do some reformatting.
+**If you look at the final plot,the 'yes votes' are ordered in decreasing order. This is not how they are ordered in the data file. You will need to reorder the data after you read it in (don't make changes to the original data file).**\
+
+```{r}
+# read in the seqControl data
+seq.control.file <- '/Users/yupan/Downloads/new-members-documentation-training-and-guides/r-training/2. boutrosLab-plotting-general/Q3/Q3_SeqControl_data.tsv';
+
+seq.control.data <- read.table(
+    seq.control.file,
+    sep = '\t',
+    header = TRUE
+    );
+
+# order by proportion of yes votes
+seq.control.data <- seq.control.data[order(seq.control.data$yes.votes,decreasing = TRUE),];
+```
+
+## Step 2. Create a heatmap displaying the cpcgene sample names.
+**The colour scheme to use for this is given in the 'Q3_PlottingInfo.R' file. (Note that create.multipanelplot can be used to adjust plot proportions at the end).**\
+
+```{r}
+# Define the colours of cpcgene sample names.
+CPCG.colours.list <- default.colours(length(unique(seq.control.data$CPCG)));
+
+# Create the names of the colours
+names(CPCG.colours.list) <- unique(seq.control.data$CPCG);
+CPCG.colours.names <- as.character(unlist(CPCG.colours.list[seq.control.data$CPCG]));
+
+# Create the legend of the colours
+CPCG.colours.names.legend <- list(
+    legend = list(
+        colours = as.character(CPCG.colours.list),
+        labels = as.character(unique(seq.control.data$CPCG))
+        )
+    );
+
+# Create the heatmap
+CPCG.heatmap <- create.heatmap(
+    t(data.frame(CPCG.colours.names)),
+    print.colour.key = FALSE,
+    cluster.dimensions = 'none',
+    input.colours = TRUE,
+    col.colour = 'black',
+    grid.col = TRUE,
+    force.grid.col = TRUE
+    );
+
+CPCG.heatmap;
+```
+
+## Step 3. Create heatmaps for each of the three metrics.
+**If you read the header names,'Average.reads.start','Unique.start.points',and 'X..Bases...0.quality' are the columns you are looking for. The colour schemes for these range from white to either 'deeppink','darkblue',or 'darkorange' (these are R colour names). Note that you will have to show the metric values on a continuous scale.**\
+```{r}
+# Prep the data of seq.control.data$Average.reads.start
+average.reads.start <- as.matrix(as.numeric(seq.control.data$Average.reads.start));
+
+# Create the heatmap,change the colour.scheme to c('white','deeppink')
+heatmap.average.reads.start <- BoutrosLab.plotting.general::create.heatmap(
+    main = 'Heatmap of Average.reads.start',
+    main.cex = 1.5,
+    x = t(average.reads.start),
+    clustering.method = 'none',
+    print.colour.key = FALSE,
+    force.grid.col = TRUE,
+    grid.col = TRUE,
+    # change the colour scheme as requested
+    colour.scheme = c('white','deeppink')
+    );
+
+#heatmap.average.reads.start;
+
+# Repeat the process for X..Bases...0x,change the colour.scheme to c('white','darkorange')
+X.Bases.0x <- as.matrix(as.numeric(seq.control.data$X..Bases...0x));
+
+heatmap.X.Bases.0x <- BoutrosLab.plotting.general::create.heatmap(
+    main = 'Heatmap of X..Bases...0x',
+    main.cex = 1.5,
+    x = t(X.Bases.0x),
+    clustering.method = 'none',
+    print.colour.key = FALSE,
+    force.grid.col = TRUE,
+    grid.col = TRUE,
+    # change the colour scheme as requested
+    colour.scheme = c('white','darkorange'),
+    );
+
+#heatmap.X.Bases.0x;
+
+# Repeat the process for Unique.start.points,change the colour.scheme to c('white','darkblue')
+unique.start.points <- as.matrix(as.numeric(seq.control.data$Unique.start.points));
+
+heatmap.unique.start.points <- BoutrosLab.plotting.general::create.heatmap(
+    main = 'Heatmap of Unique.start.points',
+    main.cex = 1.5,
+    x = t(unique.start.points),
+    clustering.method = 'none',
+    print.colour.key = FALSE,
+    force.grid.col = TRUE,
+    grid.col = TRUE,
+    # change the colour scheme as requested
+    colour.scheme = c('white','darkblue'),
+    );
+
+#heatmap.unique.start.points;
+
+```
+
+## Step 4. For the FFPE covariate bar,you'll need to know that the samples which are FFPE are samples 'CPCG0102P' and 'CPCG0103P'. Also,the colour scheme consists of 'white' and 'darkslategrey'.
+
+```{r}
+# Define the colours of FFPE.
+FFPE.colours.list <- c('white','darkslategrey');
+
+# Create FFPE.colours names
+names(FFPE.colours.list) <- c(FALSE,TRUE);
+
+FFPE.colours <- as.character(unlist(FFPE.colours.list[as.character(seq.control.data$CPCG %in% c('CPCG0102P','CPCG0103P'))]));
+
+# Create the legend for FFPE.colours
+FFPE.colours.legend <- list(
+    legend = list(
+        colours = as.character(FFPE.colours.list),
+        labels = c('Frozen','FFPE'),
+        title = expression(underline('Sample preparation'))
+        )
+    );
+
+# Create FFPE heatmap
+FFPE.heatmap <- create.heatmap(
+    t(data.frame(FFPE.colours)),
+    cluster.dimensions = 'none',
+    input.colours = TRUE,
+    print.colour.key = FALSE,
+    col.colour = 'black',
+    grid.col = TRUE,
+    col.lwd = 1.5,
+    force.grid.col = TRUE,
+    yaxis.tck = 0,
+    height = 1
+    );
+
+FFPE.heatmap;
+```
+
+## Step 5. Plot the barplot.
+**The colour scheme consists of 'black' and 'grey'. The 'outcome' column in the data file tells you what the observed coverage was for a sample. An outcome of 0 indicates coverage <50x,and 1 indicates coverage >=50x.**\
+```{r}
+# Create the barplot.
+bar.plot <- create.barplot(
+    yes.votes ~ 1:nrow(seq.control.data),
+    data = seq.control.data,
+    groups = seq.control.data$outcome,
+    xaxis.tck = 0,
+    xlab.label = '',
+    xaxis.lab = rep('',nrow(seq.control.data)),
+    yaxis.tck = 1,
+    yat = seq(from = 0,to = 1,by = 0.25),
+    ylab.axis.padding = 2,
+    ylab.label = '',
+    ylab.cex = 1,
+    col = c('grey','black'),
+    border.lwd = 1,
+    border.col = c('grey','black'),
+    abline.h = .5,
+    abline.lty = 'dashed',
+    abline.col = 'grey'
+    );
+
+bar.plot;
+```
+
+## Step 6. Create a legend for each of the covariates.
+**Ensure that the legend displays either continuous or discrete schemes as appropriate. The individual legends can be combined using the legend.grob function. The labels for 'unique start points' can be formatted using the scientific.notation function.**\
+
+```{r}
+# Create a legend for each of the covariates.
+continuous.var <- list(
+    list(
+        name = 'Average.reads.start',
+        colour = c('white','deeppink'),
+        legend.labels = c('1.070','1.190'),
+        legend.title = 'Average reads/start'
+        ),
+    list(
+        name = 'X..Bases...0.quality',
+        colour = c('white','darkorange'),
+        legend.labels = c('83.0','97.0'),
+        legend.title = '% Bases > 0 quality'
+        ),
+    list(
+        name = 'Unique.start.points',
+        colour = c('white','darkblue'),
+        legend.title = 'Unique start points'
+        )
+    );
+
+# Rewrite Step3 into a function,which can create any heatmap
+func.create.heatmap <- function(x,colour) {
+    heatmap <- create.heatmap(
+        t(data.frame(x)),
+        cluster.dimensions = 'none',
+        print.colour.key = FALSE,
+        col.colour = 'black',
+        colour.scheme = colour,
+        grid.col = TRUE,
+        col.lwd = 1.5,
+        force.grid.col = TRUE,
+        yaxis.tck = 0,
+        yat = FALSE,
+        xat = FALSE,
+        height = 1
+        );
+    return(heatmap);
+    }
+
+# Use the new function to regenerate the heapmaps
+continous.heatmaps <- lapply(
+    continuous.var,
+    function(var) func.create.heatmap(seq.control.data[,var$name],var$colour)
+    );
+
+# Create a function which can add legend for each variable
+func.create.legend <- function(colour,legend.title,labels) {
+    res.legend <- list(
+        legend = list(
+        colours = colour,
+        continuous = TRUE,
+        labels = labels,
+        title = bquote(~underline(.(legend.title)))
+        )
+    );
+    return(legend = res.legend);
+    }
+
+# Use the function to create legend for each variable
+continous.legends <- lapply(
+    continuous.var,
+    function(var) func.create.legend(var$colour,var$legend.title,var$legend.labels)
+    );
+```
+
+## Step 7. Create a legend for the barplot. This should be created separately for ease of placement in the final figure.
+
+```{r}
+#create bar legend
+bar.legend <- list(
+    inside = list(
+        fun = draw.key,
+        args = list(
+            key = list(
+                title = expression(underline('Observed')),
+                # Draw legend points
+                points = list(
+                    col = 'black',
+                    pch = 22,
+                    cex = 4,
+                    fill = c('grey','black')
+                    ),
+                # draw legend text
+                text = list(lab = c('< 50x','>=50x')),
+                # space items
+                padding.text = 1,
+                cex = 1
+                )
+            ),
+        # place legend
+        x = 0.75,
+        y = 0.98
+        )
+    );
+
+# Create the barplot with the legend.
+bar.plot <- create.barplot(
+    yes.votes ~ 1:nrow(seq.control.data),
+    data = seq.control.data,
+    groups = seq.control.data$outcome,
+    col = c('grey','black'),
+    border.lwd = 1,
+    border.col = c('grey','black'),
+    xaxis.tck = 0,
+    xlab.label = '',
+    xaxis.lab = rep('',nrow(seq.control.data)),
+    yaxis.tck = 1,
+    yat = seq(from = 0,to = 1,by = 0.25),
+    ylab.axis.padding = 2,
+    ylab.label = '',
+    ylab.cex = 1.5,
+    abline.h = .5,
+    abline.lty = 'dashed',
+    abline.col = 'grey',
+    legend = bar.legend
+    );
+
+bar.plot;
+```
+
+## Step 8. Combine all of the plots and legends together using create.multipanelplot.
+```{r}
+#combine legends
+legends <- legend.grob(
+    c(
+        CPCG.colours.names.legend,
+        FFPE.colours.legend,
+        continous.legends[[3]],
+        continous.legends[[2]],
+        continous.legends[[1]]
+        ),
+    title.just = 'left'
+    );
+
+# create the final plot
+create.multiplot(
+    plot.objects = list(
+        continous.heatmaps[[1]],
+        continous.heatmaps[[2]],
+        continous.heatmaps[[3]],
+        FFPE.heatmap,
+        bar.plot
+        ),
+    ylab.label = c('\t','Fraction of yes votes','\t','\t'),
+    ylab.padding = 7,
+    ylab.cex = 1.5,
+    main.key.padding = 0,
+    main.cex = 1.25,
+    yaxis.cex = 1,
+    panel.heights = c(2,0.2,0.2,0.2,0.2),
+    y.spacing = c(0.5,0.5,0.5,0.5),
+    xaxis.lab = NULL,
+    xaxis.alternating = 0,
+    # set the yaxis labels (only needed on the bar plot)
+    yaxis.lab = list(
+        NULL,
+        NULL,
+        NULL,
+        NULL,
+        sprintf(sprintf('%.2f',seq(from = 0,to = 1,by = 0.25)))
+        ),
+    yat = list(
+        c(),
+        c(),
+        c(),
+        c(),
+        seq(from = 0,to = 1,by = 0.25)
+        ),
+    legend = list(right = list(fun = legends)),
+    print.new.legend = TRUE,
+    height = 6,
+    width = 10
+    );
+```

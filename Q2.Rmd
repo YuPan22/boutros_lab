@@ -1,0 +1,157 @@
+# Q2
+**In bioinformatics it is often hard to identify an appropriate analytical statistical test.**
+**This may be true because assumptions are violated,or because no standard test exists. In either case,a common solution is to use permutation-based approaches,like a bootstrap.**
+
+**In this problem you will be comparing a number of different statistical approaches for comparing two groups.**
+**The biological question here involves two tumour subtypes,A and B.**
+**You have three samples of subtype A and nine samples of subtype B.**
+**You have used a small microarray platform to measure the mRNA levels of 500 genes on each of these 12 tumours.**
+**You wonder which genes differ between the two tumour subtypes.**
+
+**Your first input data file (input1.txt) contains one column for the gene identifier and three columns of numeric data.**
+**Your second input data file (input2.txt) contains one column for the gene identifier and nine columns of numeric data.**
+**For both files,each column represents a biological sample (human tumour) and each row represents a gene.**
+**The three numeric columns in input1.txt represent tumour-type A and the nine numeric columns in input2.txt represent tumour-type B.**
+**In statistical terms,you need to determine if the three columns in input1.txt represent a random sample from the overall data for each gene.**
+
+**Your first steps to answer this question are:**
+
+## 1. Read the two input files
+```{r}
+df.subtype.A <- read.table('/Users/yupan/Downloads/new-members-documentation-training-and-guides/r-training/1. statistical-analysis/input-files/input1.txt',header = TRUE);
+df.subtype.B <- read.table('/Users/yupan/Downloads/new-members-documentation-training-and-guides/r-training/1. statistical-analysis/input-files/input2.txt',header = TRUE);
+```
+
+## 2. Combine the two files into one file that contains the data for all 12 tumours.
+**Make sure that the three columns in input1.txt precede the nine columns in input2.txt. Do this in the following two ways,and verify that they produce the same result:**
+**a) Sort each file individually,and then use the cbind function**
+**b) Use only the merge function**
+
+```{r}
+# Install dplyr,which includes a bunch of functions that make data frame operation easier.
+# install.packages('dplyr',repos = 'http://cran.us.r-project.org');
+library(dplyr);
+
+# Sort both df.subtype.A and df.subtype.B by 'GeneID' in asc order.
+df.subtype.A.sorted <- df.subtype.A[order(df.subtype.A$GeneID),];
+df.subtype.B.sorted <- df.subtype.B[order(df.subtype.B$GeneID),];
+
+# Combine df1.sorted and df2.sorted,remove the duplicated 'GeneID' in df2.sorted.
+df.combined.by.cbind <- cbind(df.subtype.A.sorted[,1:4],df.subtype.B.sorted[,2:10]);
+
+# Check the combined data frame
+str(df.combined.by.cbind);
+
+# The merge() function saves the troubles of sorting,joining.
+df.combined.by.merge <- merge(df.subtype.A,df.subtype.B);
+
+# all_equal() function proves that df.combined.by.merge,df.combined.by.cbind are same.
+all_equal(df.combined.by.merge,df.combined.by.cbind);
+```
+
+## 3. Perform a t-test comparing the first three tumours to the last nine tumours for *each* gene using a for-loop
+```{r}
+# Declare the sequences instead of using magical numbers.
+seq.subtype.A <- 2:4;
+seq.subtype.B <- 5:13;
+seq.A.B <- 2:13;
+
+# Create a vector to store all the p_values.
+res.p.values.ttest <- c();
+
+# Get the of the rows in the merged dataframe
+count.df.combined.by.merge <- nrow(df.combined.by.merge);
+
+# Loop through each row of df.combined.by.merge
+for (i in 1:count.df.combined.by.merge) {
+    vector.subtype.A <- df.combined.by.merge[i,seq.subtype.A];
+    vector.subtype.B <- df.combined.by.merge[i,seq.subtype.B];
+    res.ttest <- t.test(vector.subtype.A,vector.subtype.B);
+    res.p.values.ttest <- c(res.p.values.ttest,res.ttest$p.value);
+    }
+```
+
+Using *apply functions can avoid using for-loop and make the codes more modularized and readable.
+
+## 4. Plot a histogram of the p-values
+```{r}
+hist(
+    res.p.values.ttest,
+    main = 't-test p_values - subtype.A vs subtype.B',
+    xlab = 'p-values',
+    breaks = seq(0,1,0.01),
+    xaxp = c(0,1,20),
+    ylim = c(0,15)
+    );
+```
+
+## 5. Are your axis labels rotated 90 degrees?  If so,fix this.
+https://www.tenderisthebyte.com/blog/2019/04/25/rotating-axis-labels-in-r/
+
+```{r}
+hist(
+    res.p.values.ttest,
+    main = 't-test p_values - subtype.A vs subtype.B - y axis label vertical',
+    xlab = 'p-values',
+    breaks = seq(0,1,0.01),
+    xaxp = c(0,1,20),
+    ylim = c(0,15),
+    yaxt = 'n' # this removes y-axis
+    );
+
+# redraw the y-axis
+axis(
+    side = 2,
+    las = 2,
+    mgp = c(3,0.75,0)
+    );
+```
+
+## 6. Your histogram might look a bit weird in normal space,consider plotting it in log-space
+
+The term 'log-space' here has 2 possible explanations:
+
+1,Use the log scale,which doesn't change the frequencies but 'magnify' small scales. This can be turned on by using 'ylog = TRUE'. 
+
+```{r}
+hist(
+    res.p.values.ttest,
+    main = 't-test p_values - subtype.A vs subtype.B - ylog = TRUE',
+    xlab = 'p-values',
+    breaks = seq(0,1,0.01),
+    xaxp = c(0,1,20),
+    ylim = c(0,15),
+    ylog = TRUE
+    );
+```
+
+But in this sample,the frequencies are not big,using it doesn't make any difference. So probably the next explanation is what the exercise desires.
+
+2,Apply the logarithmic conversion to the frequencies. This also 'magnifies' small frequencies. 
+Below is how to implement it.
+```{r}
+# Get the original counts of all bins
+myhist <- hist(
+    res.p.values.ttest,
+    breaks = seq(0,1,0.01),
+    plot = FALSE
+    );
+
+# Apply logarithmic to the counts
+myhist$counts <- log(myhist$counts,10);
+
+plot(
+    myhist,
+    main = 'Ttest p-values with log10(frequency)',
+    xlab = 'p-values',
+    xaxp = c(0,1,20),
+    ylab = 'log10(Frequency)',
+    ylim = c(0,1.5),
+    col = 'grey'
+    );
+```
+
+## 7. What does this distribution tell you?
+The p_values are relatively evenly distributed in the range (0,1).
+It'd be interesting to look into those genes that gave p_values < 0.1,also check the effect sizes,in order to find out the genes that really differentiate input1 and input2.
+

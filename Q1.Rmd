@@ -1,0 +1,107 @@
+# Q1
+
+## 1. Read the file AHR-test-file.txt
+```{r}
+AHR.test.file <- '/Users/yupan/Downloads/new-members-documentation-training-and-guides/r-training/1. statistical-analysis/input-files/AHR-test-file.txt';
+
+# Use read.table to read the AHR-test-file into a data frame
+df <- read.table(AHR.test.file,header = TRUE);
+
+# Check the first 10 rows
+# df[1:10,];
+```
+
+## 2. Perform a t-test between control and treated
+
+I'm not sure what 'control' means in the data.
+Since each mouse has 'control' and 'treatment',I assume it means each mouse was measured before and after the treatment. If this is the case,then I should perform a paired t-test.
+```{r,echo=FALSE}
+# Mouse 9 has a NA 'treated' value,so filter out this record.
+df.wo.na <- df[complete.cases(df),];
+
+# Now apply the t test.
+res.ttest <- t.test(
+    df.wo.na$Control,
+    df.wo.na$Treated,
+    paired = TRUE
+    );
+# The other parameters(alternative= 'wo.sided ',mu = 0,var.equal,conf.level = 0.95,etc) just take the default values.
+
+# Check res.ttest$p.value
+paste('res.ttest$p.value:',res.ttest$p.value);
+```
+
+Because res$p.value equals 0.13455 and conf.level takes the default 0.95,the null test cannot be rejected,namely,the difference is more likely due to randomness.
+
+## 3. Perform a wilcoxon test between control and treated
+```{r}
+res.wilcox <- wilcox.test(
+    df.wo.na$Control,
+    df.wo.na$Treated,
+    paired = TRUE
+    );
+
+paste('res.wilcox$p.value:',res.wilcox$p.value);
+```
+
+Again,p-value = 0.1953 means we cannot reject the null hypothesis.
+
+## 4. Calculate a fold-change between control and treated
+A fold change is basically a ratio. It indicates the number of times something has changed in comparison to an original amount. 
+```{r}
+fold.change <- mean(df.wo.na$Treated) / mean(df.wo.na$Control);
+paste('fold.change:',fold.change);
+```
+
+Another popular variant is log2 fold change.
+```{r}
+fold.change.log <- log2(mean(df.wo.na$Treated) / mean(df.wo.na$Control));
+paste('fold.change.log:',fold.change.log);
+```
+
+
+# Theory
+## 1. Different type of t-tests
+There are three types of t-tests
+
+* One sample t-test
+* Paired sample t-test
+* Independent two-sample t-test
+    * with equal variance
+    * with unequal variance(Welch's t-test)
+
+## 2. Different two-sample tests
+* parametric
+    * t-test: 1 categorical predictor,1 quantitative outcome variable
+    * ANOVA: 1 or more categorical predictor,1 quantitative outcome variable. Usually used when there are +3 samples,but 2 samples can be used too.
+* non-parametric
+    * Wilcoxon Rank-Sum test(Mann Whitney U Test) for unpaired samples.
+    * Wilcoxon Signed-rank test for paired samples.
+    * Kolmogorov-Smirnov test (KS test) for unpaired samples.
+
+## 3. Which test to use when?
+* If the data is parametric,
+    * if two samples: use t-test. If two independent samples' variances are not equal,then use Welch's t-test,which adjusts DF. T-tests check if the difference of the means of two samples is significant.
+    * if more than two samples: use ANOVA,but need to make sure the variances of all groups are equal.
+* If the population is non-parametric,then use non-parametric tests,say Wilcoxon test,which sorts the data,then check the difference of the medians of two samples is significant. The Wilcoxon test is less sensitive to outliers because it looks at the median difference. 
+
+The advantage of using a parametric test instead of a nonparametric equivalent is that the former will have more statistical power than the latter. 
+In other words,a parametric test is more able to lead to a rejection of H0. 
+Most of the time,the p-value associated with a parametric test will be lower than the p-value associated with a nonparametric equivalent that is run on the same data.
+
+Nonparametric tests are valid in a broader range of situations.
+
+
+# Coding
+## 1. Good file-opening semantics
+The R base function read.table() is a general function that can be used to read a file in table format. The data will be imported as a data frame.
+Depending on the file formats,several variants of read.table() are available,including read.csv(),read.csv2(),read.delim() and read.delim2().
+
+## 2. R help
+We can use help(cmd),?cmd,example(cmd) commands to find out the info of cmd.
+More details can be found in https://www.r-project.org/help.html
+
+## 3. Parameterization in R functions
+We should use functions to modularize our codes,avoid hard-coded settings and consider reusability.
+A good explanation is https://www.r-bloggers.com/2016/07/good-parameterisation-in-r/
+

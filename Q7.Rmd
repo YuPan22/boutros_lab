@@ -1,0 +1,19 @@
+# Q7.txt
+**Lastly it's important (critical in fact!) to describe your statistical analysis accurately and precisely.**  
+**Write a publication-quality methods section describing what you've done.**  
+**Make sure you are appropriately referencing your methods with citations to the literature (specific reference format does not matter for this).**
+**Make sure that you have added all your code and outputs from questions 1-7 to your GitHub training repository!**
+
+This question looks customized for researchers who need to public papers. 
+Considering I'm an engineer now, skip this one.
+
+```{r setup, include=FALSE}
+library(reticulate)
+use_python("/Users/yupan/opt/miniconda3/bin/python")
+
+```
+
+```{python}
+import pandas
+print('hello')
+```

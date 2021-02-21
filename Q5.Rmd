@@ -1,0 +1,138 @@
+# Q5
+**As noted above it is often hard to identify an appropriate analytical statistical test.**
+**This may be true because assumptions are violated,or because no standard test exists.**
+**In either case,a common solution is to use permutation-based approaches,like a bootstrap.**  
+**Your final task is to develop a bootstrap-like test in R.  This may be quite challenging at first.**
+
+```{r}
+# Call get_merged_df.R first to get the required data
+source('get_merged_df.R');
+
+# 1. Calculate the median of the first three columns for each gene
+subtype.A.median <- apply(
+    X = df.combined.by.merge,
+    MARGIN = 1,
+    FUN = function(x) {
+        median(x[seq.subtype.A]);
+        }
+    );
+
+# 2. Use a permutation test to estimate the expected value for each gene:
+# a. Randomly select three columns from all the 12 columns
+set.seed(202101);
+
+random.3.columns <- apply(
+    X = df.combined.by.merge,
+    MARGIN = 1,
+    FUN = function(x) {
+        sample(x[seq.A.B],3,replace = TRUE);
+        }
+    );
+
+# b. Calculate their median
+random.3.columns.median <- apply(
+    X = random.3.columns,
+    MARGIN = 2,
+    FUN = median
+    );
+
+# c. Determine if this value is larger or smaller than that of the first 3 columns
+comparison.res <- random.3.columns.median > subtype.A.median
+
+# d. Repeat a.-c. 1000 times
+# Initialization
+ITERATIONS <- 1000;
+i <- 1;
+random.3.columns.median.all <- c();
+comparison.res.all <- c();
+
+# repeat a-c 1000 times
+for (i in 1:ITERATIONS) {
+    # choose three columns randomly
+    random.3.columns <- apply(
+        X = df.combined.by.merge,
+        MARGIN = 1,
+        FUN = function(x) {
+            sample(x[seq.A.B],3,replace = TRUE);
+            }
+        );
+
+    # calculate the median of the three columns
+    random.3.columns.median <- apply(
+        X = random.3.columns,
+        MARGIN = 2,
+        FUN = median
+        );
+
+    random.3.columns.median.all <- cbind(random.3.columns.median.all,random.3.columns.median);
+
+    # compare the median of the randomly chosen 3 columns with the median of the 3 columns of input1.
+    comparison.res <- random.3.columns.median > subtype.A.median;
+    comparison.res.all <- cbind(comparison.res.all,comparison.res);
+    }
+
+# sum up all the TRUEs in comparison.res.all
+comparison.res.all.trues.sums <- apply(
+    X = comparison.res.all,
+    MARGIN = 1,
+    FUN = sum
+    );
+
+# 3. Use the frequencies in 2. to estimate a p-value for each gene
+p.values <- comparison.res.all.trues.sums / ITERATIONS;
+
+# 4. Perform a false-discovery adjustment on the p-values (?p.adjust)
+p.values.fdr <- p.adjust(
+    p.values,
+    method = 'fdr',
+    n = ITERATIONS
+    );
+
+# 5. Write your results (gene ID,observed median,expected median,p-value,adjusted p-value) to file in a tab-delimited format
+# create a data frame as instructed
+result.dataframe <- as.data.frame(
+    cbind(
+        df.combined.by.merge$GeneID,
+        random.3.columns.median.all,
+        subtype.A.median,
+        p.values,
+        p.values.fdr
+        )
+    );
+
+# add the columns names
+names(result.dataframe) <- c(
+    'GeneID',
+    paste('observed median',seq(1:ITERATIONS),sep = ' '),
+    'expected median',
+    'p-value',
+    'fdr adjusted p-value'
+    );
+
+# output as a csv file
+write.table(
+    result.dataframe,
+    file = '/Users/yupan/Downloads/boutros.r.training.q5.permutation.result.csv',
+    row.names = FALSE,# don't write the row numbers
+    sep = '\t'
+    #sep = ','
+    );
+
+# 6. Plot a histogram of the (unadjusted) p-values. What does this tell you?
+hist(
+    p.values,
+    main = 'p_values without correction',
+    xlab = 'p-values',
+    breaks = seq(0,1,0.01),# set bucket width as 0.01,since we are interested to check the distribution of p_values (0.01,0.05,0.1). total 100 buckets.
+    xaxp = c(0,1,20),# set tick width as 0.5,total 20 ticks
+    ylim = c(0,30),
+    ylog = TRUE
+    );
+```
+ 
+In the above histogram,what I pay attention to is the bar of the bin 0.95. 
+The genes in this bar yields 0.95 probability after randomly choosing 3 columns 1000 times,which means,for these genes,the likelihood of seeing the median of the first three columns is only 0.05.
+Since we still see  the median of the first three columns,we can claim this is not due to randomness (there's 5% chance that we're wrong) and we should further check the genes involved in this bar.
+
+The idea of bootstrap is commonly used in statistics and machine learning. For example,feature selection (stepwise methods) and model selection (random forest).
+

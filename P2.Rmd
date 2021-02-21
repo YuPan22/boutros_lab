@@ -1,0 +1,131 @@
+# SIMPLE PLOTS: BoutrosLab.plotting.general
+## 2a. Create a simple scatterplot using BoutrosLab.plotting.general.
+**Use the 'cars' dataset provided the R Datasets package**\
+**Set a title and x- and y-axis labels that make sense**\
+**Ensure that the axes ranges make sense**\
+**Fiddle with other parameters as needed to make the figure aesthetically pleasing (e.g. font size, line width, etc)**\
+
+```{r}
+scatterplot.mpg.displacement <- BoutrosLab.plotting.general:::create.scatterplot(
+    data = mtcars,
+    formula = disp ~ mpg,
+    main = 'BoutrosLab.plotting.general:::create.scatterplot mtcars',
+    main.cex = 1.5,
+    xlab.label = 'MPG',
+    xlimits = c(8.5, 37.5),
+    xat =  seq(10, 35, 5),
+    xlab.cex = 1.5,
+    ylab.label = 'Displacement',
+    ylimits = c(50, 500),
+    ylab.cex = 1.5
+    );
+
+#scatterplot.mpg.displacement;
+```
+
+## 2b. Try another function now. Create a heatmap displaying data found in the 'Loblolly' dataset found in the R Datasets package.
+**Note: you may need to reorganize the data**\
+**Do all formatting necessary to improve presentation (e.g. colour scheme, etc)**\
+
+https://stat.ethz.ch/R-manual/R-patched/library/datasets/html/Loblolly.html
+The 'Loblolly' dataset contains
+* height: a numeric vector of tree heights (ft).
+* age: a numeric vector of tree ages (yr).
+* Seed: an ordered factor indicating the seed source for the tree. The ordering is according to increasing maximum height.
+
+```{r}
+# Check Loblolly
+str(Loblolly);
+
+# Reorganize the data so that we form a matrix with age as x axis, height of each seed as y axis. Namely, we align the heights of seeds by ages.
+Loblolly.reshaped <- reshape(
+    Loblolly,
+    idvar = 'age',
+    timevar = 'Seed',
+    direction = 'wide'
+    );
+
+# Check Loblolly.reshaped
+str(Loblolly.reshaped);
+
+# Use BoutrosLab.plotting.general:::create.heatmap to create heatmap
+BoutrosLab.plotting.general:::create.heatmap(
+    # Remove the age column
+    x = Loblolly.reshaped[,-1],
+    main = 'Loblolly growth heatmap by seed and age',
+    main.cex = 1.5,
+    xlab.label = 'Age',
+    xlab.cex = 1.5,
+    xaxis.cex = 0.75,
+    ylab.label = 'Seed',
+    ylab.cex = 1.5,
+    yaxis.cex = 0.75,
+    # Define the y axis labels
+    yaxis.lab = (c(substring(colnames(Loblolly.reshaped[,-1]), 8, 10))),
+    # Define the x axis labels
+    xaxis.lab = c(row.names(Loblolly.reshaped)),
+    # Don't rotate the x axis labels
+    xaxis.rot = 0,
+    # Show the grids
+    grid.row = TRUE,
+    grid.col = TRUE,
+    # Don't show the clustering lines
+    clustering.method = 'none',
+    # Don't show the key heatmap
+    print.colour.key = FALSE
+    );
+```
+
+## 2c. Take a look at the 'ChickWeight' dataset in the R Datasets package
+**Think about which plot-type should be used to effectively highlight the relationship between the growth of chicks and their diet.**\
+**Create the plot using BoutrosLab.plotting.general functions**\
+**Note that you have many options here, including plotting all the data points, aggregating the data, controlling for certain factors, etc.**\
+
+https://rpubs.com/YaRrr/WPA0Answers
+```{r}
+# Get familiar with the data
+str(ChickWeight);
+head(ChickWeight);
+```
+
+We can create a histogram of weights for each diet
+```{r}
+par(mfrow = c(2, 2));
+
+for (diet.i in 1:4) {
+    hist(
+        x = ChickWeight$weight[ChickWeight$Diet == diet.i],
+        xlab = 'weights',
+        xlim = c(0, 400),
+        main = paste('Chick Weights\nDiet ', diet.i, sep = '')
+        );
+    }
+```
+
+A better plotting that I can think of is violin plotting.
+We can use the 'yarrr' lib.
+```{r}
+# install.packages('yarrr');
+
+library(yarrr);
+
+# yarrr.guide();
+
+pirateplot(
+    formula = weight ~ Diet,
+    data = ChickWeight,
+    main = 'Chicken weights by Diet'
+    );
+```
+
+Or use BoutrosLab.plotting.general:::create.violinplot
+```{r}
+BoutrosLab.plotting.general:::create.violinplot(
+    formula = weight ~ Diet,
+    data = ChickWeight,
+    main = 'Chicken weights by Diet'
+    );
+```
+
+The plots show that Diet4 yields most chicken of similar weights (around 140), which is good for standard industrial production.
+

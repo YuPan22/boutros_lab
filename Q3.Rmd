@@ -1,0 +1,113 @@
+# Q3
+**Okay,your next question might be if a t-test was inappropriate for this analysis. Repeat the above comparison using a Wilcoxon test and fold-changes. Create suitable plots to compare the results and write a paragraph describing the similarities/differences.**
+
+```{r}
+# Call get_merged_df.R first to get the required data
+source('get_merged_df.R');
+
+res.p.values.utest <- c();
+
+# Loop through each row of df.combined.by.merge
+for (i in 1:nrow(df.combined.by.merge)) {
+    #* Split each row into 'subtype.A' and 'subtype.B'
+    vector.subtype.A <- df.combined.by.merge[i,seq.subtype.A];
+    vector.subtype.B <- df.combined.by.merge[i,seq.subtype.B];
+
+    # Apply wilcox.test
+    # Note,wilcox.test takes vector as inputs
+    res.wilcox.test <- wilcox.test(
+        unlist(vector.subtype.A),
+        unlist(vector.subtype.B),
+        paired = FALSE,
+        exact = FALSE
+        );
+
+    # Append the t.test's p.value into res.p.values
+    res.p.values.utest <- c(res.p.values.utest,res.wilcox.test$p.value);
+    }
+
+hist(
+    res.p.values.utest,
+    main = 'Wilcoxon test p-values',
+    xlab = 'p-values',
+    xaxp = c(0,1,20),
+    breaks = seq(0,1,0.025),
+    ylog = TRUE
+    );
+ 
+# Now start calculating the fold changes.
+
+fold.changes <- c();
+
+# Loop through each row of df.combined.by.merge
+for (i in 1:nrow(df.combined.by.merge)) {
+    vector.subtype.A.mean <- mean(unlist(df.combined.by.merge[i,seq.subtype.A]));
+    vector.subtype.B.mean <- mean(unlist(df.combined.by.merge[i,seq.subtype.B]));
+    fold.change <- log2(vector.subtype.A.mean / vector.subtype.B.mean);
+    fold.changes <- c(fold.changes,fold.change);
+    }
+
+hist(
+    fold.changes,
+    main = 'Histogram of Log2 fold changes',
+    xlab = 'Log2 fold changes',
+    breaks = 100,
+    ylog = TRUE
+    );
+```
+ 
+
+**To this point you've been doing these analyses using a loop (for or while statements).**
+**You'll next want to learn to use the R function 'apply' to generate a vector of p-values (t- and u-tests) and of fold-changes.**  
+**Remember,the vectors should only contain p-values,not any other information.**
+**You will need to figure out how to do this using apply,and this will require you to create what's called a 'wrapper function'.**
+
+Treating a function as an object is universal to languages or libraries (panda,spark) that support functional programming,which applies a function to a data set holistically. 
+
+Personally,I like anonymous functions,which encapsulate the logic and make the code more readable.
+Sometimes,we can also pass reusable functions to 'apply'. (Reusability is good but not free. We have to a logging system to index the functions that can be reused. Also if a reusable function is defined in another file,we need to 'import' or 'source' that file,which could go wrong due to the path or namespace issues. We need to weigh the pros and cons according to the project in question.)
+Below I will use both the methods.
+
+```{r}
+# Use apply to run ttest.
+t.test.p.values <- apply(
+    X = df.combined.by.merge,
+    MARGIN = 1,
+    FUN = function(x) {
+        ttest.res <- t.test(as.numeric(x[seq.subtype.A]),as.numeric(x[seq.subtype.B]));
+        ttest.res$p.value;
+        }
+    );
+
+# Check the p values.
+t.test.p.values;
+
+# Use anonymous function.
+wilcox.test.p.values <- apply(
+    X = df.combined.by.merge,
+    MARGIN = 1,
+    FUN = function(x) {
+        utest.res <- wilcox.test(
+            as.numeric(x[seq.subtype.A]),
+            as.numeric(x[seq.subtype.B]),
+            exact = FALSE
+            );
+        utest.res$p.value;
+        }
+    );
+
+# Check wilcox.test.p.values
+wilcox.test.p.values;
+
+# Use 'apply' to calculate fold changes
+fold.changes <- apply(
+    X = df.combined.by.merge,
+    MARGIN = 1,
+    FUN = function(x) {
+        mean(as.numeric(x[seq.subtype.B])) / mean(as.numeric(x[seq.subtype.A]));
+        }
+    );
+
+# Check fold.changes
+fold.changes;
+```

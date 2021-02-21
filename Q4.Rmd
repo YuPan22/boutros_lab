@@ -1,0 +1,87 @@
+# Q4
+**There are a number of statistical challenges involved in executing so many statistical tests.**  
+**The primary one is called the 'multiple testing' problem.** 
+**What is it?** 
+**Find R commands to adjust for multiple-testing using the two best-known adjustments (FDR and Bonferroni).**  
+**Recreate the histograms above.** 
+**What does this tell you?**
+
+Suppose we randomly picked one guy from the street and let him predict the results of tossing a fair coin 20 times. 
+If he predicted all 20 times correctly,then he probably is a real psychic.
+However,if we tried this for each person living on earth and found some people who predicted correctly all 20 times,then we cannot say these people are psychics. 
+Because when we tried so many trials,some people would inevitably get lucky (70 billion * (0.5^20) = 6676,namely,6676 people on earth could get lucky).
+
+This happens in lab tests too. If we try many factors,we will get multiple factors yielding statistical significance,however,some factors just get lucky the same as in the above coin-tossing case.  
+To avoid this,we need some methods to adjust the p-values of each test. The adjustment will make the p-values larger so that it is harder to reject H0.
+
+There are several methods to adjust the p-values,e.g. Bonferroni,Holm,and BHY.
+Bonferroni correction (calculate FWER) is too stringent,which increases false negative rate. 
+BHY correction (calculate FDR) is more commonly used.
+
+```{r}
+# Call get_merged_df.R first to get the required data
+source('get_merged_df.R');
+
+# First let's try FDR adjustment as below:
+res.p.values.ttest.fdr.adjusted <- p.adjust(
+    res.p.values.ttest,
+    method = 'fdr',
+    n = length(res.p.values.ttest)
+    );
+
+# Get the original counts of all bins
+myhist.fdr.adjusted <- hist(
+    res.p.values.ttest.fdr.adjusted,
+    breaks = seq(0,1,0.01),
+    plot = FALSE
+    );
+
+# Apply logarithmic to the counts
+myhist.fdr.adjusted$counts <- log(myhist.fdr.adjusted$counts,10);
+
+plot(
+    myhist.fdr.adjusted,
+    main = 't-test p_values - input1 vs input2 - FDR adjusted',
+    xlab = 'p-values',
+    xaxp = c(0,1,20),
+    ylab = 'log10(Frequency)',
+    ylim = c(0,2.5),
+    col = 'grey'
+    );
+ 
+# Now let's try Bonferroni adjustment as below:
+res.p.values.ttest.fwer.adjusted <- p.adjust(
+    res.p.values.ttest,
+    method = 'bonferroni',
+    n = length(res.p.values.ttest)
+    );
+
+# Use the log10(frequencies) histogram to magnify small frequencies.
+# Get the original counts of all bins
+myhist.fwer.adjusted <- hist(
+    res.p.values.ttest.fwer.adjusted,
+    breaks = seq(0,1,0.01),
+    plot = FALSE
+    );
+
+# Apply logarithmic to the counts
+myhist.fwer.adjusted$counts <- log(myhist.fwer.adjusted$counts,10);
+
+plot(
+    myhist.fwer.adjusted,
+    main = 't-test p_values - input1 vs input2 - Bonferroni adjusted',
+    xlab = 'p-values',
+    xaxp = c(0,1,20),
+    ylab = 'log10(Frequency)',
+    ylim = c(0,2.5),
+    col = 'grey'
+    );
+```
+
+From the above two histograms,we can see FDR adjustment yields small frequencies between 0.1 and 0.2. 
+While Bonferroni adjustment yields nothing between 0.1 and 0.2. 
+Apparently,Bonferroni adjustment is much stringent than FDR adjustment.
+
+
+
+

@@ -1,0 +1,101 @@
+# Q6
+**To this point all the analyses have been performed using standard R functions.**  
+**Fortunately the BoutrosLab repository has a variety of functions that will aid in making the plots and statistics.**  
+**Modify your code to use:**
+**a) BoutrosLab.statistics.general for all p-value extraction functions**
+**b) BoutrosLab.plotting.general for all plots**
+
+```{r}
+# Call get_merged_df.R first to get the required data
+source('get_merged_df.R');
+
+# Overwrite the seq.subtype.A and seq.subtype.B defined in get_merged_df.R
+seq.subtype.A <- 1:3;
+seq.subtype.B <- 4:12;
+```
+
+## a) BoutrosLab.statistics.general for all p-value extraction functions
+```{r}
+# Use BoutrosLab.statistics.general::get.ttest.p
+res.p.values.ttest.by.BL <- apply(
+    X = df.combined.by.merge[,seq.A.B],
+    MARGIN = 1,
+    FUN = function(x) {
+        BoutrosLab.statistics.general::get.ttest.p(
+            x,
+            group1 = c(seq.subtype.A),
+            group2 = c(seq.subtype.B)
+            )
+        }
+    );
+
+# Use BoutrosLab.statistics.general::get.utest.p
+res.p.values.utest.by.BL <- apply(
+    X = df.combined.by.merge[,seq.A.B],
+    MARGIN = 1,
+    FUN = function(x) {
+        BoutrosLab.statistics.general::get.utest.p(
+            x,
+            group1 = c(seq.subtype.A),
+            group2 = c(seq.subtype.B)
+            )
+        }
+    );
+
+# Use BoutrosLab.statistics.general::get.foldchange
+fold.changes.by.BL <- apply(
+    X = df.combined.by.merge[,seq.A.B],
+    MARGIN = 1,
+    FUN = function(x) {
+        BoutrosLab.statistics.general::get.foldchange(
+            as.numeric(x),
+            group1 = c(seq.subtype.A),
+            group2 = c(seq.subtype.B)
+            )
+        }
+    );
+```
+
+## b) BoutrosLab.plotting.general for all plots
+```{r}
+# Use BoutrosLab.plotting.general::create.histogram to draw histogram for res.p.values.ttest.by.BL
+BoutrosLab.plotting.general::create.histogram(
+    x = res.p.values.ttest.by.BL,
+    main = 'ttest p-values histogram by BoutrosLab.plotting.general::create.histogram',
+    main.cex = 1,
+    xlab.label = 'p-values',
+    xlab.cex = 1,
+    type = 'count',
+    xlimits = c(0,1),
+    ylimits = c(0,15),
+    breaks = seq(0,1,0.01),
+    xat =  c(seq(0,1,0.1))
+    );
+
+# Use BoutrosLab.plotting.general::create.histogram to draw histogram for res.p.values.utest.by.BL
+BoutrosLab.plotting.general::create.histogram(
+    x = res.p.values.utest.by.BL,
+    main = 'utest p-values histogram by BoutrosLab.plotting.general::create.histogram',
+    main.cex = 1,
+    xlab.label = 'p-values',
+    xlab.cex = 1,
+    type = 'count',
+    xlimits = c(0,1),
+    ylimits = c(0,80),
+    breaks = seq(0,1,0.025),
+    xat =  c(seq(0,1,0.1))
+    );
+
+# Use BoutrosLab.plotting.general::create.histogram to draw histogram for fold.changes.by.BL
+BoutrosLab.plotting.general::create.histogram(
+    x = fold.changes.by.BL,
+    main = 'fold changes histogram by BoutrosLab.plotting.general::create.histogram',
+    main.cex = 1,
+    xlab.label = 'fold changes',
+    xlab.cex = 1,
+    type = 'count',
+    breaks = 100
+    );
+```
+
+
