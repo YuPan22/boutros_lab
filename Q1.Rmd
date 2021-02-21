@@ -5,7 +5,7 @@
 AHR.test.file <- '/Users/yupan/Downloads/new-members-documentation-training-and-guides/r-training/1. statistical-analysis/input-files/AHR-test-file.txt';
 
 # Use read.table to read the AHR-test-file into a data frame
-df <- read.table(AHR.test.file,header = TRUE);
+df <- read.table(AHR.test.file, header=TRUE);
 
 # Check the first 10 rows
 # df[1:10,];
